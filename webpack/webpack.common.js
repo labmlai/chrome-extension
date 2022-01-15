@@ -31,6 +31,7 @@ module.exports = {
                 default: false,
             },
         },
+        minimize: false,
     },
     module: {
         rules: [

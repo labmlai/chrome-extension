@@ -6,7 +6,7 @@ This is the source code of the papers.labml.ai Chrome extension.
 
 ## About
 
-🔎  View information about research papers linked from websites you visit.
+🔎 View information about research papers linked from websites you visit.
 
 This extension shows you the following details about research papers:
 ✨ 2-line summary
