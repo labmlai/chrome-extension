@@ -1,6 +1,4 @@
-# chrome-extension
-
-Source code of the papers.labml.ai Chrome extension
+# Papers Chrome extension
 
 ## Setting up
 

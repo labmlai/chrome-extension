@@ -1,0 +1,27 @@
+@import 'common';
+
+html,
+body {
+    background-color: #ecf0f3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol';
+    touch-action: manipulation;
+}
+
+#papers-bar-container {
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+}
+
+.page-title {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 12px;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+}

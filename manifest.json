@@ -1,0 +1,38 @@
+{
+    "name": "papers.labml.ai",
+    "manifest_version": 3,
+    "icons": {
+        "16": "assets/icon16.png",
+        "48": "assets/icon48.png",
+        "128": "assets/icon128.png"
+    },
+    "version": "1.0.0",
+    "description": "\uD83D\uDD0E  View information about research papers linked from websites you visit.",
+    "background": {
+        "service_worker": "js/background.js"
+    },
+    "options_ui": {
+        "page": "html/options.html",
+        "browser_style": false,
+        "open_in_tab": true
+    },
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "webNavigation",
+        "tabs",
+        "storage"
+    ],
+    "action": {
+        "default_title": "Papers",
+        "default_icon": "assets/icon48.png",
+        "default_popup": "html/popup.html"
+    },
+    "host_permissions": ["<all_urls>"],
+    "web_accessible_resources": [
+        {
+            "resources": ["assets/font-awesome/*"],
+            "matches": ["<all_urls>"]
+        }
+    ]
+}
