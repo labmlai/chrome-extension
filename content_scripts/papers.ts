@@ -1,7 +1,7 @@
-import { Paper, PaperModel } from '../common/models'
-import { DetailView } from './details_view'
-import { LinkType, Settings } from '../common/settings'
-import { LOGGER } from '../common/logger'
+import {Paper, PaperModel} from '../common/models'
+import {DetailView} from './details_view'
+import {LinkType, Settings} from '../common/settings'
+import {LOGGER} from '../common/logger'
 
 let links: Btn[] = []
 
@@ -15,11 +15,11 @@ class Btn {
     private addedIndicator: boolean
 
     constructor(
-        paper: Paper,
-        link: string,
-        container: HTMLElement,
-        linkType: LinkType,
-        emoji: string
+      paper: Paper,
+      link: string,
+      container: HTMLElement,
+      linkType: LinkType,
+      emoji: string,
     ) {
         this.paper = paper
         this.link = link
@@ -67,12 +67,12 @@ class Btn {
         let btn = document.createElement('div')
         btn.classList.add('paper-link-btn')
         LOGGER.log(
-            getComputedStyle(this.container).getPropertyValue('line-height')
+          getComputedStyle(this.container).getPropertyValue('line-height'),
         )
         let height =
-            parseFloat(
-                getComputedStyle(this.container).getPropertyValue('font-size')
-            ) - 2
+          parseFloat(
+            getComputedStyle(this.container).getPropertyValue('font-size'),
+          ) - 2
         btn.style.height = `${height}px`
         btn.style.width = `${height}px`
         btn.style.borderRadius = `${height / 2}px`
@@ -99,8 +99,8 @@ class Btn {
     private addIndicator(parent: Node) {
         if (parent.firstChild.nodeName === 'BR') {
             if (
-                parent.firstChild.nextSibling != null &&
-                parent.firstChild.nextSibling.nodeName.match(/H[1-6]/) != null
+              parent.firstChild.nextSibling != null &&
+              parent.firstChild.nextSibling.nodeName.match(/H[1-6]/) != null
             ) {
                 this.addIndicator(parent.firstChild.nextSibling)
                 return
@@ -112,31 +112,31 @@ class Btn {
     }
 }
 
-export function requestPaper(link: string) {
+export function requestPaper(links: string[]) {
     chrome.runtime.sendMessage(
-        { method: 'paper', link: link, referer: document.location.href },
-        (res) => {
-            let err = chrome.runtime.lastError
-            if (err != null) {
-                LOGGER.error('Send Error 3', link, err)
-                chrome.runtime.sendMessage({
-                    method: 'error',
-                    data: {
-                        error: err.message,
-                    },
-                    event: err,
-                    stackTrace: 'err.stack',
-                })
-            }
-            LOGGER.log(res)
-        }
+      {method: 'paper', links: links, referer: document.location.href},
+      (res) => {
+          let err = chrome.runtime.lastError
+          if (err != null) {
+              LOGGER.error('Send Error 3', links, err)
+              chrome.runtime.sendMessage({
+                  method: 'error',
+                  data: {
+                      error: err.message,
+                  },
+                  event: err,
+                  stackTrace: 'err.stack',
+              })
+          }
+          LOGGER.log(res)
+      },
     )
 }
 
 export function addIndicator(
-    a: HTMLAnchorElement,
-    link: string,
-    settings: Settings
+  a: HTMLAnchorElement,
+  link: string,
+  settings: Settings,
 ) {
     try {
         if (a.classList.contains('paper-link')) {
@@ -146,14 +146,13 @@ export function addIndicator(
         if (getComputedStyle(a).getPropertyValue('display') === 'inline') {
             a.style.display = 'inline-block'
         }
-        requestPaper(link)
 
         let btn = new Btn(
-            new Paper(),
-            link,
-            a,
-            settings.linkType,
-            settings.emoji
+          new Paper(),
+          link,
+          a,
+          settings.linkType,
+          settings.emoji,
         )
 
         links.push(btn)

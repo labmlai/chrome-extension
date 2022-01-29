@@ -1,6 +1,6 @@
-import { addIndicator, requestPaper, updateIndicator } from './papers'
-import { DEFAULT_SETTINGS, Settings } from '../common/settings'
-import { LOGGER } from '../common/logger'
+import {addIndicator, requestPaper, updateIndicator} from './papers'
+import {DEFAULT_SETTINGS, Settings} from '../common/settings'
+import {LOGGER} from '../common/logger'
 
 const SUPPORTED_DOMAINS = [
     'arxiv.org',
@@ -42,12 +42,17 @@ function validateLink(link: string) {
 let settings: Settings
 
 function markAllLinks(anchors: NodeListOf<HTMLAnchorElement>) {
+    let arr: { a: HTMLAnchorElement, link: string }[] = []
     for (let a of anchors) {
         let link = extractPaperLink(a)
         if (link != null) {
-            addIndicator(a, link, settings)
+            arr.push({a: a, link: link})
         }
     }
+    requestPaper(arr.map(value => value.link))
+    arr.forEach(value => {
+        addIndicator(value.a, value.link, settings)
+    })
 }
 
 function setup() {
@@ -55,9 +60,7 @@ function setup() {
         LOGGER.log('ignoring link parsing')
         if (window['labml_links'] != null) {
             LOGGER.log('using the old links', window['labml_links'])
-            for (let link in window['labml_links']) {
-                requestPaper(link)
-            }
+            requestPaper(window['labml_links'])
         }
         return
     }
@@ -70,59 +73,59 @@ function setup() {
             a.classList.remove('paper-link')
         }
     }
-    chrome.storage.sync.get({ settings: DEFAULT_SETTINGS }, (items) => {
+    chrome.storage.sync.get({settings: DEFAULT_SETTINGS}, (items) => {
         LOGGER.log('Settings', items)
         settings = items.settings
         if (validateLink(document.location.href) != null) {
-            requestPaper(document.location.href)
+            requestPaper([document.location.href])
         }
         markAllLinks(document.querySelectorAll('a'))
 
         document.addEventListener(
-            'DOMNodeInserted',
-            function (e) {
-                let node = <HTMLElement>e.target
-                // LOGGER.log(node)
-                if (typeof node.querySelectorAll === 'function') {
-                    setTimeout(() => {
-                        try {
-                            markAllLinks(node.querySelectorAll('a'))
-                        } catch (err) {
-                            LOGGER.error('Send Error 1', err)
-                            chrome.runtime.sendMessage({
-                                method: 'error',
-                                data: {
-                                    error: err.message,
-                                },
-                                event: err,
-                                stackTrace: err.stack,
-                            })
-                        }
-                    }, 300)
-                }
-            },
-            false
+          'DOMNodeInserted',
+          function(e) {
+              let node = <HTMLElement>e.target
+              // LOGGER.log(node)
+              if (typeof node.querySelectorAll === 'function') {
+                  setTimeout(() => {
+                      try {
+                          markAllLinks(node.querySelectorAll('a'))
+                      } catch (err) {
+                          LOGGER.error('Send Error 1', err)
+                          chrome.runtime.sendMessage({
+                              method: 'error',
+                              data: {
+                                  error: err.message,
+                              },
+                              event: err,
+                              stackTrace: err.stack,
+                          })
+                      }
+                  }, 300)
+              }
+          },
+          false,
         )
 
         chrome.runtime.onMessage.addListener(
-            (message, sender, sendResponse) => {
-                try {
-                    window['labml_links'] = message
-                    updateIndicator(message)
-                    LOGGER.log('tab message', message)
-                    sendResponse('got it')
-                } catch (err) {
-                    LOGGER.error('Send Error 2', err)
-                    chrome.runtime.sendMessage({
-                        method: 'error',
-                        data: {
-                            error: err.message,
-                        },
-                        event: err,
-                        stackTrace: err.stack,
-                    })
-                }
-            }
+          (message, sender, sendResponse) => {
+              try {
+                  window['labml_links'] = message
+                  updateIndicator(message)
+                  LOGGER.log('tab message', message)
+                  sendResponse('got it')
+              } catch (err) {
+                  LOGGER.error('Send Error 2', err)
+                  chrome.runtime.sendMessage({
+                      method: 'error',
+                      data: {
+                          error: err.message,
+                      },
+                      event: err,
+                      stackTrace: err.stack,
+                  })
+              }
+          },
         )
     })
 }

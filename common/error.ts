@@ -1,10 +1,12 @@
-import { ajaxCall } from './utils'
+import {ajaxCall} from './utils'
+import {LOGGER} from "./logger";
 
 export async function submitError(
     data: Object,
     event: any,
     stackTrace?: any
 ): Promise<any> {
+    LOGGER.error(data, event, stackTrace)
     let e = event.hasOwnProperty('reason') ? event.reason : event
     if (stackTrace == null) {
         let e = new Error()
@@ -26,7 +28,8 @@ export async function submitError(
     }
     try {
         msg['rawData'] = JSON.stringify(e)
-    } catch (e) {}
+    } catch (e) {
+    }
     let jsonData = JSON.stringify(msg, null, '\t')
     if (
         jsonData.includes(
@@ -36,10 +39,14 @@ export async function submitError(
     ) {
         return {}
     }
-    let res: any = await ajaxCall(
-        'POST',
-        `https://papers.labml.ai/api/v1/error`,
-        { error: jsonData }
-    )
-    return res
+    try {
+        let res: any = await ajaxCall(
+            'POST',
+            `https://papers.labml.ai/api/v1/error`,
+            {error: jsonData}
+        )
+        return res
+    } catch (e) {
+        return null
+    }
 }

@@ -84,7 +84,7 @@ export class PapersListItemView {
                             )
 
                             if (this.onClose != null) {
-                                let asd = $('span', '.close-btn.fas.fa-times', {
+                                $('span', '.close-btn.fas.fa-times', {
                                     on: {
                                         click: this.onClose,
                                     },

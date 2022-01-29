@@ -11,6 +11,6 @@ export enum LinkType {
 }
 
 export let DEFAULT_SETTINGS: Settings = {
-    linkType: LinkType.emoji,
+    linkType: LinkType.none,
     emoji: '📎',
 }

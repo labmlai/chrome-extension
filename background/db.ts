@@ -1,5 +1,5 @@
-import { submitError } from '../common/error'
-import { LOGGER } from '../common/logger'
+import {submitError} from '../common/error'
+import {LOGGER} from '../common/logger'
 
 class Db {
     private database: IDBDatabase
@@ -11,13 +11,10 @@ class Db {
             let tabsRequest = indexedDB.open('Data', 2)
             tabsRequest.onerror = (ev) => {
                 LOGGER.log('Problem opening DB')
-                submitError(
-                    {
-                        type: 'Problem opening DB',
-                        name: ev.type,
-                    },
-                    ev
-                )
+                submitError({
+                    type: 'Problem opening DB',
+                    name: ev.type,
+                }, ev)
                 reject(ev)
             }
 
@@ -54,13 +51,10 @@ class Db {
                 LOGGER.log('Opened DB connection')
                 this.database.onerror = (ev) => {
                     LOGGER.log('Error on DB', ev)
-                    submitError(
-                        {
-                            type: 'Error on DB',
-                            name: ev.type,
-                        },
-                        ev
-                    )
+                    submitError({
+                        type: 'Error on DB',
+                        name: ev.type,
+                    }, ev)
                 }
                 resolve()
             }
@@ -139,7 +133,7 @@ class Db {
 
 export let DB = new Db()
 DB.initDatabases()
-    .then((value) => {
-        LOGGER.log('DB initializing succeeded')
-    })
-    .catch((reason) => LOGGER.error('DB initializing failed', reason))
+  .then((value) => {
+      LOGGER.log('DB initializing succeeded')
+  })
+  .catch((reason) => LOGGER.error('DB initializing failed', reason))

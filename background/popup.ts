@@ -1,6 +1,6 @@
-import { Paper } from '../common/models'
-import { submitError } from '../common/error'
-import { LOGGER } from '../common/logger'
+import {Paper} from '../common/models'
+import {submitError} from '../common/error'
+import {LOGGER} from '../common/logger'
 
 let popupTabs: { [tabId: number]: BgPopup } = {}
 
@@ -11,10 +11,7 @@ export async function createPopup(port: chrome.runtime.Port): Promise<number> {
     return p.tabId
 }
 
-export function updatePopupPapers(
-    tabId: number,
-    papers: { [link: string]: Paper }
-) {
+export function updatePopupPapers(tabId: number, papers?: { [link: string]: Paper }) {
     if (popupTabs[tabId] == null) {
         return
     }
@@ -39,35 +36,31 @@ class BgPopup {
                 this.tabId = (await this.getCurrentTab()).id
             }
         } catch (e) {
-            submitError(
-                {
-                    error: e.message,
-                    tabId: this.tabId,
-                },
-                e,
-                e.stack
-            ).then()
+            submitError({
+                error: e.message,
+                tabId: this.tabId,
+            }, e, e.stack).then()
         }
         popupTabs[this.tabId] = this
     }
 
-    updatePapers(papers: { [link: string]: Paper }) {
+    updatePapers(papers?: { [link: string]: Paper }) {
+        if (papers == null) {
+            this.port.postMessage({})
+            return
+        }
         let res = {}
         for (let link in papers) {
-            if (
-                papers[link] != null &&
-                papers[link].paperId != null &&
-                res[papers[link].paperId] == null
-            ) {
+            if (papers[link] != null && papers[link].paperId != null && res[papers[link].paperId] == null) {
                 res[papers[link].paperId] = papers[link].toJSON()
             }
         }
-        this.port.postMessage(res)
+        this.port.postMessage({papers: res})
     }
 
     private async getCurrentTab(): Promise<chrome.tabs.Tab> {
         return new Promise((resolve, reject) => {
-            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
                 try {
                     if (tabs.length !== 1) {
                         reject(tabs)
@@ -75,14 +68,10 @@ class BgPopup {
                         resolve(tabs[0])
                     }
                 } catch (err) {
-                    submitError(
-                        {
-                            data: err.message,
-                            tabs: tabs,
-                        },
-                        err,
-                        err.stack
-                    ).then()
+                    submitError({
+                        data: err.message,
+                        tabs: tabs,
+                    }, err, err.stack).then()
                 }
             })
         })

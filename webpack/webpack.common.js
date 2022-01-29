@@ -55,7 +55,6 @@ module.exports = {
             patterns: [
                 { from: 'assets', to: '../assets' },
                 { from: 'html', to: '../html' },
-                { from: 'manifest.json', to: '../' },
             ],
             options: {},
         }),

@@ -1,19 +1,40 @@
-import { Paper } from '../common/models'
-import { submitError } from '../common/error'
-import { DB } from './db'
-import { LOGGER } from '../common/logger'
+import {Paper} from '../common/models'
+import {submitError} from '../common/error'
+import {DB} from './db'
+import {LOGGER} from '../common/logger'
 
 let bgTabs: { [tabId: number]: BgTab } = {}
+let lockedTabs: Map<number, (() => void)[]> = new Map<number, (() => void)[]>()
 
-export async function getTab(
-    tabId: number,
-    tabUrl: string = null
-): Promise<BgTab> {
+async function obtainLock(tabId: number) {
+    if (lockedTabs.has(tabId)) {
+        return new Promise<void>((resolve) => {
+            let callbacks = lockedTabs.get(tabId)
+            callbacks.push(() => {
+                obtainLock(tabId).then(() => {
+                    resolve()
+                })
+            })
+            lockedTabs.set(tabId, callbacks)
+        })
+    }
+
+    lockedTabs.set(tabId, [])
+    return
+}
+
+function releaseLock(tabId: number) {
+    let callbacks = lockedTabs.get(tabId)
+    lockedTabs.delete(tabId)
+    if (callbacks != null) {
+        callbacks.forEach((value) => value())
+    }
+}
+
+export async function getTab(tabId: number, tabUrl: string = null): Promise<BgTab> {
     LOGGER.log('Requested tab', tabId, bgTabs, JSON.stringify(bgTabs))
-    if (
-        bgTabs[tabId] == null ||
-        (tabUrl != null && bgTabs[tabId].tabUrl != tabUrl)
-    ) {
+    await obtainLock(tabId)
+    if (bgTabs[tabId] == null || (tabUrl != null && bgTabs[tabId].tabUrl != tabUrl)) {
         bgTabs[tabId] = new BgTab(tabId, tabUrl)
         let data = <BgTabModel>await DB.getRecord('tabs', tabId)
         if (data != null && (tabUrl == null || data.tabUrl == tabUrl)) {
@@ -22,16 +43,19 @@ export async function getTab(
         LOGGER.log('Created new tab', tabId, bgTabs, JSON.stringify(bgTabs))
     }
 
+    releaseLock(tabId)
     return bgTabs[tabId]
 }
 
 export async function removeTab(tabId: number) {
     LOGGER.log('Tab remove requested', tabId, bgTabs, JSON.stringify(bgTabs))
+    await obtainLock(tabId)
     if (bgTabs[tabId] != null) {
         delete bgTabs[tabId]
         await DB.deleteRecord('tabs', tabId)
         LOGGER.log('Tab removed', tabId, bgTabs, JSON.stringify(bgTabs))
     }
+    releaseLock(tabId)
 }
 
 interface BgTabModel {
@@ -39,6 +63,17 @@ interface BgTabModel {
     tabUrl?: string
     papers: { [link: string]: string }
     processed: boolean
+}
+
+function errorIncludesString(err: any, str: string) {
+    if (err == null) {
+        return false
+    }
+    if (typeof err.message !== 'string' && !(err.message instanceof String)) {
+        return false
+    }
+
+    return err.message.includes(str)
 }
 
 class BgTab {
@@ -74,23 +109,27 @@ class BgTab {
         }
     }
 
-    async add(link: string) {
-        this.processed = true
-        if (this.papers[link] != null) {
+    async add(links: string | string[]) {
+        if (links == null) {
             return
         }
-        this.papers[link] = ''
+        if (typeof links === 'string') {
+            links = [links]
+        }
+        this.processed = true
+        links.forEach(link => {
+            if (this.papers[link] != null) {
+                return
+            }
+            this.papers[link] = ''
+        })
         await DB.upsertRecord('tabs', this.toJSON())
     }
 
     async updatePapers(papersDetails: { [link: string]: Paper }) {
         let res = {}
         for (let link in this.papers) {
-            if (
-                (this.papers[link] == null || this.papers[link] == '') &&
-                papersDetails[link] != null &&
-                papersDetails[link].paperId != null
-            ) {
+            if (!this.isPaperFetched(link) && this.hasPaperDetails(papersDetails, link)) {
                 this.papers[link] = papersDetails[link].paperId
                 this.uniquePapers.add(papersDetails[link].paperId)
             }
@@ -104,28 +143,28 @@ class BgTab {
             try {
                 chrome.tabs.sendMessage(this.tabId, res, (response) => {
                     if (chrome.runtime.lastError != null) {
-                        submitError(
-                            {
+                        // Ignore tab closing while it's being processed??
+                        if (!errorIncludesString(chrome.runtime.lastError, 'Receiving end does not exist')) {
+                            submitError({
                                 error: chrome.runtime.lastError,
                                 tabId: this.tabId,
-                            },
-                            {}
-                        )
+                            }, {})
+                        }
                         resolve({})
                         return
                     }
                     resolve(response)
                 })
             } catch (err) {
-                submitError(
-                    {
+                // Ignore tab closing while it's being processed??
+                if (!errorIncludesString(err, 'Receiving end does not exist')) {
+                    submitError({
                         data: err.message,
                         tab: this.tabId,
                         payload: res,
-                    },
-                    err,
-                    err.stack
-                ).then()
+                    }, err, err.stack).then()
+                }
+                resolve({})
             }
         })
     }
@@ -137,5 +176,20 @@ class BgTab {
             tabUrl: this.tabUrl,
             processed: this.processed,
         }
+    }
+
+    private isPaperFetched(link: string) {
+        if (this.papers[link] == null) {
+            return false
+        }
+        return this.papers[link] != ''
+    }
+
+    private hasPaperDetails(papersDetails: { [link: string]: Paper }, link: string) {
+        if (papersDetails[link] == null) {
+            return false
+        }
+        return papersDetails[link].paperId != null
+
     }
 }

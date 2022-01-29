@@ -1,12 +1,7 @@
-import { submitError } from './error'
-import { LOGGER } from './logger'
+import {submitError} from './error'
+import {LOGGER} from './logger'
 
-export async function ajaxCall(
-    method: string,
-    url: string,
-    data: object = null,
-    headers: { [key: string]: string } = null
-) {
+export async function ajaxCall(method: string, url: string, data: object = null, headers: { [key: string]: string } = null) {
     return new Promise((resolve, reject) => {
         let body
         if (data != null) {
@@ -22,14 +17,18 @@ export async function ajaxCall(
                 accept: 'application/json',
             },
             body: body,
-        }).then((response) => {
-            // LOGGER.log('response', response)
-            if (response.status >= 200 && response.status < 300) {
-                resolve(response.json())
-            } else {
-                reject(`${response.status}  ${url} ${response.text()}`)
-            }
         })
+          .then((response) => {
+              // LOGGER.log('response', response)
+              if (response.status >= 200 && response.status < 300) {
+                  resolve(response.json())
+              } else {
+                  reject(`${response.status}  ${url} ${response.text()}`)
+              }
+          })
+          .catch((reason) => {
+              reject(reason)
+          })
     })
 }
 
@@ -45,8 +44,8 @@ export function numberWithLetter(x: number): string {
 }
 
 export function valueOrDefault(
-    x: string | null | undefined,
-    defaultValue: string
+  x: string | null | undefined,
+  defaultValue: string,
 ) {
     if (x == null) {
         return defaultValue
@@ -57,11 +56,7 @@ export function valueOrDefault(
     return x
 }
 
-export function numberOrDefault(
-    x: number | null | undefined,
-    defaultValue: string,
-    minVal: number = 0
-) {
+export function numberOrDefault(x: number | null | undefined, defaultValue: string, minVal: number = 0) {
     if (x == null) {
         return defaultValue
     }
@@ -79,34 +74,43 @@ export function formatDate(dateTime: number) {
     return date.toDateString()
 }
 
-export async function loadPaper(link: string, referer: string) {
+export async function loadPaper(links: string[], referer: string) {
     try {
         let res: any = await ajaxCall(
-            'POST',
-            `https://papers.labml.ai/extension/v1/papers`,
-            {
-                urls: [link],
-            },
-            {
-                'source-page': referer,
-            }
+          'POST',
+          `https://papers.labml.ai/extension/v1/papers`,
+          {
+              urls: links,
+          },
+          {
+              'source-page': referer,
+          },
         )
         LOGGER.log('res', res)
-        if (res[link] != null && res[link]['paper_key'] != null) {
-            return {
-                data: res[link],
-                paperId: res[link]['paper_key'],
+        let returnVal = {}
+        links.forEach((link) => {
+            if (res[link] != null && res[link]['paper_key'] != null) {
+                returnVal[link] = {
+                    data: res[link],
+                    paperId: res[link]['paper_key'],
+                }
+            } else {
+                returnVal[link] = null
             }
-        }
-        return null
+        })
+
+        return returnVal
     } catch (e) {
-        submitError(
-            {
-                error: e.message,
-            },
-            e,
-            e.stack
-        ).then()
+        submitError({
+            error: e.message,
+        }, e, e.stack).then()
     }
     return null
+}
+
+export function isString(s) {
+    if (typeof s === 'string') {
+        return true
+    }
+    return s instanceof String
 }
