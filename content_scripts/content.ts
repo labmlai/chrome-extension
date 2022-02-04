@@ -110,7 +110,6 @@ function setup() {
         chrome.runtime.onMessage.addListener(
           (message, sender, sendResponse) => {
               try {
-                  window['labml_links'] = message
                   updateIndicator(message)
                   LOGGER.log('tab message', message)
                   sendResponse('got it')

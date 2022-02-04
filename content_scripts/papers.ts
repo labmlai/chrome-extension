@@ -171,12 +171,15 @@ export function addIndicator(
 }
 
 export function updateIndicator(papers: { [link: string]: PaperModel }) {
+    let linksToSave: string[] = []
     for (let link of links) {
         if (papers[link.link] == null) {
             continue
         }
+        linksToSave.push(link.link)
 
         link.paper.loadFrom(papers[link.link])
         link.update()
     }
+    window['labml_links'] = linksToSave
 }

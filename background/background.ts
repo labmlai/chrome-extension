@@ -190,6 +190,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse(`done ${message['paperId']}`)
         } else {
             handleTabMessage(message, sender, sendResponse)
+            return true
         }
     } catch (err) {
         submitError({
