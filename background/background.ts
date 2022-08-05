@@ -96,6 +96,12 @@ class PageProcessor {
     }
 
     handleError = (err) => {
+        if (this.url.startsWith('https://ntp.msn.com')) {
+            // TODO: Handle the New Tab Page(NTP) in Edge and
+            //  remove this when adding official Edge support
+            LOGGER.error('Ignoring Edge Errors', err)
+            return
+        }
         submitError({
             data: err.message,
             tab: this.tabId,
@@ -200,7 +206,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }, err, err.stack).then()
         sendResponse(`failed ${message['paperId']}`)
     }
-    return true
 })
 
 chrome.runtime.onConnect.addListener(function(port) {

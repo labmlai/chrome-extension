@@ -6,7 +6,7 @@
         "48": "assets/icon48.png",
         "128": "assets/icon128.png"
     },
-    "version": "1.1.1",
+    "version": "1.1.2",
     "description": "\uD83D\uDD0E  View information about research papers linked from websites you visit.",
     "background": {
         "service_worker": "js/background.js"
