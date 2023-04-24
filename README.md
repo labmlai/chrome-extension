@@ -2,7 +2,7 @@
 
 This is the source code of the papers.labml.ai Chrome extension.
 
-## [Get it from Chrome webstore]()
+## [Get it from Chrome webstore](https://chrome.google.com/webstore/detail/paperslabmlai/agkeoekbbkpokfbpmmminnombikadbhb)
 
 ## About
 
